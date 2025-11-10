@@ -60,7 +60,7 @@ Colori dinamici:
 
 🟣 Viola → Unità CIVILI / Undercover
 
-🔴 Rosso lampeggiante → Operatore ferito/incosciente
+🔴 Rosso/Rosso Lampeggiante → Operatore Ferito/Incosciente
 
 - **Indicazione del nome e direzione** — il nome dell'unità/giocatore viene mostrato e tra parentesi graffe `{}` viene visualizzato l'azimut (la direzione in gradi verso cui guarda il player/IA).  
   > Esempio: `John Doe {270°}
