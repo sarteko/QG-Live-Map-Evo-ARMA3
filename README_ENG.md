@@ -29,17 +29,19 @@ Medical information and precise coordinates
 <img width="1920" height="1080" alt="screen2" src="https://github.com/user-attachments/assets/da46d231-5a42-44e2-b3ca-121c5e9d3cdf" />
 
 
+---
 
 
-🧩 Required Mods
+## 🧩 Mod richieste
 
-CBA_A3
+- [CBA_A3](https://steamcommunity.com/workshop/filedetails/?id=450814997)  
+- [ACE](https://steamcommunity.com/workshop/filedetails/?id=463939057)  
+- [cTab NSWDG Edition](https://steamcommunity.com/sharedfiles/filedetails/?id=2511318948)  
+- [BLUFORCE to CIVILIAN for Undercover](https://steamcommunity.com/sharedfiles/filedetails/?id=3595437256)  
 
-ACE
 
-cTab NSWDG Edition
+---
 
-BLUFORCE to CIVILIAN for Undercover
 
 ⚙️ How It Works
 
@@ -47,6 +49,10 @@ To be visible on the live map, players or AI units must have the cTab tablet (�
 The script then generates a live map synchronized with the game world.
 You can interact with the map via the scroll-wheel menu to move the camera, lock the view, or refresh the display.
 Unit icons update dynamically every few seconds.
+
+
+---
+
 
 🎛️ Key Features
 
@@ -74,12 +80,21 @@ Reload Map → reloads the map texture
 
 Retry Map Creation → regenerates the map display
 
+
+---
+
+
 💡 Conclusion
 
 The ARTEK Live Map Display System is designed for complex tactical missions and realistic briefings.
 It provides a clear, updated, and interactive visual overview of the battlefield.
 
+
+---
+
+
 💬 If you’d like to contribute with bug fixes or new ideas, you’re more than welcome!
 Every improvement makes the system even more immersive 🚀
+
 
 📅 Last Update: November 10, 2025
