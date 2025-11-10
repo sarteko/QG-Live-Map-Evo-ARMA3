@@ -1,60 +1,85 @@
-# QC-Live Map Evo for Arma 3
+# 🗺️ QC-Live Map Evo for Arma 3
 
-**COMPOSITION ON STEAM**: QG-Live Map Evo [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3595195576)  
+### Premessa  
+Questo script permette di **visualizzare in tempo reale** su un oggetto 3D (lavagna, laptop, schermo, mappa tattica ecc.) la **posizione e lo stato degli operatori** direttamente in gioco.  
+È pensato per missioni con **HQ**, **ricognizione**, **unità undercover** o **gestione medica avanzata (ACE)**.
 
-An optimized version of the real-time map, specifically developed for our team's needs and the dynamics of the BTC missions we run.
+Il sistema genera un **display dinamico** che aggiorna automaticamente la mappa mostrando:
+- Posizioni e direzioni delle unità BLUFOR/CIVILI  
+- Stato medico (ferito/incosciente)  (BUG sul sulla perdita di sague)
+- Laser target e bersagli designati  
+- Informazioni mediche e coordinate precise  
 
-## 🖼️ Preview
-
-![COVER](https://github.com/user-attachments/assets/362a8aba-373e-42e1-9839-d72599b24b1d)
-
-VIEW BLUFOR
-
-![BLUFORCE](https://github.com/user-attachments/assets/21937959-1b75-4f90-8f69-8c5061adb3e5)
-
-VIEW CIV
-
-![CIV](https://github.com/user-attachments/assets/735cfc54-0fe5-4e4c-aa38-eec5fcc6fb54)
-
-VIEW Change map location right mouse button function on the player.
-<img width="960" height="540" alt="sc4" src="https://github.com/user-attachments/assets/f607e336-d921-4f1b-a118-1441cf95ba4f" />
-
-VIEW LASER UAV/PLAYER
-<img width="960" height="540" alt="sc3" src="https://github.com/user-attachments/assets/315b564d-5ccc-41b8-82b9-7b201b3b99f9" />
-
-ON/OFF for LASER or AI
-<img width="960" height="540" alt="sc1" src="https://github.com/user-attachments/assets/865b4ace-d297-4da9-ba25-03a8e8352281" />
+---
 
 
+📸 Screenshot
 
-## ✨ Key Features
+![p1](https://github.com/user-attachments/assets/454fc345-eb5a-4dda-8099-1ceb431b9485)
 
-- **Real-time tracking**: Displays blufor player movements
-- **Direction indicator**: Shows azimuth between {} to see where operators are looking
-- **Cover system**: Players undercover appear in purple instead of blue
-- **Optimized briefing**: Uses the largest available monitor in-game
+![p2](https://github.com/user-attachments/assets/b3c731c3-5460-4751-914b-1776678aaffa)
 
-### Version 1.1 (29/10/2025)
-- ✅ Fixed player name formatting
-- ✅ Restored the ability to view BLUFORCE AI
-- ✅ Added ability to view (with red cross) player or drone laser designators. The name of the player or drone is included between the {}
-## Versione 1.5 (30/10/2025)
-- ✅ When you access Change Map Location, if you right-click a player, some minimal information about their health and GPS coordinates will appear in the top right corner.
+![p3](https://github.com/user-attachments/assets/6325b028-4a7a-4c41-beac-cc050d44487d)
 
-## 🤝 Credits
+<img width="960" height="540" alt="p4" src="https://github.com/user-attachments/assets/10ee907a-6a55-4934-906c-f021f23454c2" />
 
-**Based on mod by**: Z.A.M. Arma  
-**Original mod**: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3018683365)
+<img width="1920" height="1080" alt="screen1" src="https://github.com/user-attachments/assets/6265375d-ffc9-496e-b40d-9d4e212815f6" />
 
-**Recommended mod**: Cruiser's Mod BLUFORCE to CIVILIAN for undercover  
-[Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3595437256)  
-*(Not essential - only required for civilian/undercover functionality)*
+<img width="1920" height="1080" alt="screen2" src="https://github.com/user-attachments/assets/da46d231-5a42-44e2-b3ca-121c5e9d3cdf" />
 
-## 🚀 Future Developments
 
-**Coming soon** - integration of Operator's view on monitor V2.0 via dedicated menu:  
-[Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3595078376)
+---
 
-## 📝 Note
 
-QC-Live Map Evo is a slightly evolved and customized version, specifically developed for our squad operations.
+## 🧩 Mod richieste
+
+- [CBA_A3](https://steamcommunity.com/workshop/filedetails/?id=450814997)  
+- [ACE](https://steamcommunity.com/workshop/filedetails/?id=463939057)  
+- [cTab NSWDG Edition](https://steamcommunity.com/sharedfiles/filedetails/?id=2511318948)  
+- [BLUFORCE to CIVILIAN for Undercover](https://steamcommunity.com/sharedfiles/filedetails/?id=3595437256)  
+
+---
+
+## ⚙️ Come funziona
+ Per poter essere visualizzati sulla mappa live, i player o IA devono avere nell'inventario il tablet della mod cTab ("ItemcTab"), lo script genera una mappa viva sincronizzata con il mondo di gioco.
+ È possibile interagire con la mappa tramite il menu a rotella per accedere per spostare la visuale, bloccare la mappa o aggiornarla.
+ Le icone delle unità si aggiornano dinamicamente ogni pochi secondi.
+ 
+ 
+---
+
+
+##🎛️ Funzionalità principali
+
+Visualizza in tempo reale tutte le unità BLUFOR e CIVILI con:
+Indicazione del nome e direzione
+
+Colori dinamici:
+
+🔵 Blu → Unità BLUFOR
+
+🟣 Viola → Unità CIVILI / Undercover
+
+🔴 Rosso lampeggiante → Operatore ferito/incosciente
+
+- **Indicazione del nome e direzione** — il nome dell'unità/giocatore viene mostrato e tra parentesi graffe `{}` viene visualizzato l'azimut (la direzione in gradi verso cui guarda il player/IA).  
+  > Esempio: `John Doe {270°}
+- **Laser designator (croce rossa)**: se un veicolo o unità ha un bersaglio laser attivo, viene visualizzata **una croce rossa pre-attivata** sulla posizione del bersaglio e **sotto alla croce** viene mostrato il **nome della sorgente** (chi sta puntando il laser).
+  > Esempio di visuale: croce rossa su posizione bersaglio + sotto la scritta `NomeOperatore` che indica chi sta puntando.
+  
+- Reload Map → ricarica la texture
+- Retry Map Creation → rigenera la mappa
+
+
+---
+
+
+💡 Conclusioni
+
+Lo ARTEK Live Map Display System è pensato per missioni tattiche complesse e briefing realistici.
+Permette una gestione visiva chiara, aggiornata e interattiva del campo di battaglia.
+
+💬 Se vuoi contribuire con bugfix o idee, sei più che benvenuto!
+Ogni miglioramento rende il sistema ancora più immersivo 🚀
+
+📅 Ultimo aggiornamento: 10 Novembre 2025
