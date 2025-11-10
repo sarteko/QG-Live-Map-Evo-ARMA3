@@ -1,827 +1,722 @@
-if (isNil "ARTEK_fnc_makeNewMapDisplay") then {           
-    ARTEK_liveMapCount = 0;           
-    publicVariable "ARTEK_liveMapCount";           
-              
-    private _varName = "ARTEK_System_LiveMaps";           
-    private _myJIPCode = "ARTEK_LiveMaps_JIP";           
-              
-    private _value = (str {           
-        ARTEK_fnc_makeNewMapDisplay = {           
-            params ["_object"];           
-            [[_object],ARTEK_fnc_makeNewMapDisplayExec] call ARTEK_EP_fnc_addToExecQueue;           
-        };           
-              
-        ARTEK_fnc_makeNewMapDisplayExec = {           
-            params ["_object"];           
-            private _name = format ["ARTEK_liveMap_%1",ARTEK_liveMapCount];           
-            ARTEK_liveMapCount = ARTEK_liveMapCount + 1;           
-            publicVariable "ARTEK_liveMapCount";           
-            _object setVariable ["ARTEK_map_name",_name,true];           
-            _object setVariable ["ARTEK_map_showAI",false,true];      
-            _object setVariable ["ARTEK_map_showLasers",false,true];      
-            [_object,0,0.02,getPos _object] call ARTEK_fnc_setMapDisplayData;           
-            [[_name,_object], {           
-                params ["_name","_object"];           
-                if(isNull _object) exitWith {};           
-                waitUntil {!isNull (findDisplay 46) && alive player};           
-                waitUntil {!isNil "ARTEK_fnc_addMapActions"};           
-                [_name,_object] spawn ARTEK_fnc_makeMapDisplayCtrl;           
-                [_object] call ARTEK_fnc_addMapActions;           
-            }] remoteExec ['spawn',0,_object];           
-        };           
-              
-        ARTEK_fnc_makeMapDisplayCtrl = {           
-            params ["_name","_object"];           
-            private _objectData = [_object] call ARTEK_fnc_getMapTextureIndex;           
-            _objectData params ["_objectType","_textureIndex","_texturePosition","_frontOfScreen"];           
-            waitUntil {uiSleep 0.1; player distance _object < 300 && !visibleMap && ([objNull, "VIEW"] checkVisibility [eyePos player, AGLtoASL (_object modelToWorld _frontOfScreen)]) > 0.7};           
-            private _texture = format ["#(rgb,1024,1024,1)ui('RscDisplayEmpty','%1')",_name];           
-            _object setObjectTexture [_textureIndex,""];           
-            sleep 0.1;           
-            _object setObjectTexture [_textureIndex,_texture];           
-            sleep 0.1;           
-            private _display = findDisplay _name;           
-            if(isNull _display) exitWith {           
-                private _counter = _object getVariable ["ARTEK_map_tryCount",0];           
-                if(_counter >= 3) then {           
-                    systemChat "Failed to create display.";           
-                    _object setVariable ["ARTEK_map_didntLoad",true];           
-                } else {           
-                    if(!isMultiplayer) then {           
-                        systemChat "Failed to create display... trying again.";           
-                        systemChat format ["Distance to object: %1. View Distance: %2",(getPos player) distance _object, viewDistance];           
-                    };           
-                    _object setVariable ["ARTEK_map_tryCount",_counter + 1];           
-                    [_name,_object] spawn ARTEK_fnc_makeMapDisplayCtrl;           
+if (isNil "ARTEK_fnc_makeNewMapDisplay") then {            
+    ARTEK_liveMapCount = 0;            
+    publicVariable "ARTEK_liveMapCount";            
+               
+    private _varName = "ARTEK_System_LiveMaps";            
+    private _myJIPCode = "ARTEK_LiveMaps_JIP";            
+               
+    private _value = (str {            
+        ARTEK_fnc_makeNewMapDisplay = {            
+            params ["_object"];            
+            [[_object],ARTEK_fnc_makeNewMapDisplayExec] call ARTEK_EP_fnc_addToExecQueue;            
+        };            
+               
+        ARTEK_fnc_makeNewMapDisplayExec = {            
+            params ["_object"];            
+            private _name = format ["ARTEK_liveMap_%1",ARTEK_liveMapCount];            
+            ARTEK_liveMapCount = ARTEK_liveMapCount + 1;            
+            publicVariable "ARTEK_liveMapCount";            
+            _object setVariable ["ARTEK_map_name",_name,true];            
+            [_object,0,0.02,getPos _object] call ARTEK_fnc_setMapDisplayData;            
+            [[_name,_object], {            
+                params ["_name","_object"];            
+                if(isNull _object) exitWith {};            
+                waitUntil {!isNull (findDisplay 46) && alive player};            
+                waitUntil {!isNil "ARTEK_fnc_addMapActions"};            
+                [_name,_object] spawn ARTEK_fnc_makeMapDisplayCtrl;            
+                [_object] call ARTEK_fnc_addMapActions;            
+            }] remoteExec ['spawn',0,_object];            
+        };            
+               
+        ARTEK_fnc_makeMapDisplayCtrl = {            
+            params ["_name","_object"];            
+            private _objectData = [_object] call ARTEK_fnc_getMapTextureIndex;            
+            _objectData params ["_objectType","_textureIndex","_texturePosition","_frontOfScreen"];            
+            waitUntil {uiSleep 0.1; player distance _object < 300 && !visibleMap && ([objNull, "VIEW"] checkVisibility [eyePos player, AGLtoASL (_object modelToWorld _frontOfScreen)]) > 0.7};            
+            private _texture = format ["#(rgb,1024,1024,1)ui('RscDisplayEmpty','%1')",_name];            
+            _object setObjectTexture [_textureIndex,""];            
+            sleep 0.1;            
+            _object setObjectTexture [_textureIndex,_texture];            
+            sleep 0.1;            
+            private _display = findDisplay _name;            
+            if(isNull _display) exitWith {            
+                private _counter = _object getVariable ["ARTEK_map_tryCount",0];            
+                if(_counter >= 3) then {            
+                    _object setVariable ["ARTEK_map_didntLoad",true];            
+                } else {            
+                    _object setVariable ["ARTEK_map_tryCount",_counter + 1];            
+                    [_name,_object] spawn ARTEK_fnc_makeMapDisplayCtrl;            
+                };            
+            };            
+            sleep 0.1;            
+            _display setVariable ["ARTEK_map_mapObject",_object];            
+            private _waitingToLoad = _display ctrlCreate ["RscStructuredText",11];            
+            _waitingToLoad ctrlSetStructuredText parseText "<t align='center'>Loading map...</t>";            
+            _waitingToLoad ctrlSetTextColor [1,1,1,1];            
+            _waitingToLoad ctrlSetPosition [0,0.5,1,0.1];            
+            _waitingToLoad ctrlCommit 0;            
+            displayUpdate _display;            
+               
+            if(isNull _object) exitWith {};            
+            sleep 0.5;            
+            private _mapCtrl = _display ctrlCreate ["RscMapControl",10];            
+            _mapCtrl ctrlSetPosition _texturePosition;            
+            _mapCtrl ctrlMapSetPosition _texturePosition;            
+            _mapCtrl ctrlCommit 0;            
+            _object setVariable ["ARTEK_map_ctrl",_mapCtrl];            
+                   
+            private _event = _mapCtrl ctrlAddEventHandler ["Draw", {            
+                params ["_mapCtrl"];            
+                private _display = ctrlParent _mapCtrl;            
+               
+                private _map = _display getVariable ["ARTEK_map_mapObject",objNull];            
+                if(isNull _map) exitWith {            
+                    private _event = _mapCtrl getVariable ["ARTEK_map_mapEvent",-1];            
+                    if(_event != -1) then {            
+                        _mapCtrl ctrlRemoveEventHandler ["Draw",_event];            
+                    };            
+                };            
+               
+                private _bluforPlayers = allPlayers select {
+                    side _x == west && alive _x && ("ItemcTab" in (items _x + assignedItems _x))
                 };           
-            };           
-            sleep 0.1;           
-            _display setVariable ["ARTEK_map_mapObject",_object];           
-            private _waitingToLoad = _display ctrlCreate ["RscStructuredText",11];           
-            _waitingToLoad ctrlSetStructuredText parseText "<t align='center'>Loading map...</t>";           
-            _waitingToLoad ctrlSetTextColor [1,1,1,1];           
-            _waitingToLoad ctrlSetPosition [0,0.5,1,0.1];           
-            _waitingToLoad ctrlCommit 0;           
-            displayUpdate _display;           
-              
-            if(isNull _object) exitWith {};           
-            sleep 0.5;           
-            private _mapCtrl = _display ctrlCreate ["RscMapControl",10];           
-            _mapCtrl ctrlSetPosition _texturePosition;           
-            _mapCtrl ctrlMapSetPosition _texturePosition;           
-            _mapCtrl ctrlCommit 0;           
-            _object setVariable ["ARTEK_map_ctrl",_mapCtrl];           
-                  
-            private _event = _mapCtrl ctrlAddEventHandler ["Draw", {           
-                params ["_mapCtrl"];           
-                private _display = ctrlParent _mapCtrl;           
-              
-                private _map = _display getVariable ["ARTEK_map_mapObject",objNull];           
-                if(isNull _map) exitWith {           
-                    private _event = _mapCtrl getVariable ["ARTEK_map_mapEvent",-1];           
-                    if(_event != -1) then {           
-                        _mapCtrl ctrlRemoveEventHandler ["Draw",_event];           
-                    };           
+                private _civPlayers = allPlayers select {
+                    side _x == civilian && alive _x && ("ItemcTab" in (items _x + assignedItems _x))
                 };           
-              
-                private _showAI = _map getVariable ["ARTEK_map_showAI",false];      
-                private _showLasers = _map getVariable ["ARTEK_map_showLasers",false];      
-                  
-                private _bluforPlayers = allPlayers select {side _x == west && alive _x};          
-                private _civPlayers = allPlayers select {side _x == civilian && alive _x};          
-                private _playersToShow = _bluforPlayers + _civPlayers;          
-                  
-                private _unitsToShow = _playersToShow;      
-                if(_showAI) then {      
-                    private _bluforAI = allUnits select {side _x == west && alive _x && !isPlayer _x};      
-                    _unitsToShow = _unitsToShow + _bluforAI;      
-                };      
-                      
-                {          
-                    private _unit = _x;          
-                    private _pos = getPosASL _unit;          
-                    private _dir = getDir _unit;          
-                    private _azimut = round _dir;          
-                    private _unitName = name _unit;          
-                    private _text = format ["%1 {%2°}", _unitName, _azimut];          
-                          
-                    private _color = if (side _unit == west) then {        
-                        [0, 0.3, 0.6, 1]          
-                    } else {        
-                        [0.5, 0, 0.5, 1]            
-                    };          
-                          
-                    _mapCtrl drawIcon [          
-                        "\A3\ui_f\data\map\markers\military\circle_ca.paa",          
-                        _color,          
-                        _pos,          
-                        16,          
-                        16,          
-                        0,          
-                        "",          
-                        2,          
-                        0.04,          
-                        "RobotoCondensedBold",          
-                        "center"          
-                    ];          
-                          
-                    _mapCtrl drawIcon [          
-                        "\A3\ui_f\data\map\markers\military\arrow2_ca.paa",          
-                        _color,          
-                        _pos,          
-                        12,          
-                        12,          
-                        _dir,          
-                        "",          
-                        2,          
-                        0.04,          
-                        "RobotoCondensedBold",          
-                        "center"          
-                    ];          
-                          
-                    private _textOffset = 28;      
-                    private _textPos = _mapCtrl ctrlMapScreenToWorld (_mapCtrl posWorldToScreen _pos vectorAdd [0, _textOffset * pixelH]);      
-                  
-                    _mapCtrl drawIcon [          
-                        "#(argb,8,8,3)color(0,0,0,0)",          
-                        _color,          
-                        _textPos,          
-                        0,          
-                        0,          
-                        0,          
-                        _text,          
-                        2,          
-                        0.04,          
-                        "RobotoCondensedBold",          
-                        "center"          
-                    ];          
-                          
-                } forEach _unitsToShow;          
-                  
-                if(_showLasers) then {      
-                    private _allVehicles = vehicles + allUnits;      
-                    {      
-                        private _vehicle = _x;      
-                        private _laserTarget = laserTarget _vehicle;      
-                        if(!isNull _laserTarget) then {      
-                            private _laserPos = getPosASL _laserTarget;      
-                            private _sourceName = "";      
-                            if(isPlayer _vehicle) then {      
-                                _sourceName = name _vehicle;      
-                            } else {      
-                                private _crew = crew _vehicle;      
-                                if(count _crew > 0) then {      
-                                    _sourceName = getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName");      
-                                } else {      
-                                    _sourceName = getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName");      
-                                };      
-                            };      
-                            private _laserText = format ["%1", _sourceName];      
-                                  
-                            _mapCtrl drawIcon [      
-                                "\A3\ui_f\data\map\markers\military\destroy_ca.paa",      
-                                [1, 0, 0, 1],      
-                                _laserPos,      
-                                12,      
-                                12,      
-                                0,      
-                                "",      
-                                2,      
-                                0.04,      
-                                "RobotoCondensedBold",      
-                                "center"      
-                            ];      
-                                  
-                            private _laserTextOffset = 28;      
-                            private _laserTextPos = _mapCtrl ctrlMapScreenToWorld (_mapCtrl posWorldToScreen _laserPos vectorAdd [0, _laserTextOffset * pixelH]);      
-                                  
-                            _mapCtrl drawIcon [      
-                                "#(argb,8,8,3)color(0,0,0,0)",      
-                                [1, 0, 0, 1],      
-                                _laserTextPos,      
-                                0,      
-                                0,      
-                                0,      
-                                _laserText,      
-                                2,      
-                                0.04,      
-                                "RobotoCondensedBold",      
-                                "center"      
-                            ];      
-                        };      
-                    } forEach _allVehicles;      
-                };      
-            }];           
-            _mapCtrl setVariable ["ARTEK_map_mapEvent",_event];           
-              
-            waitUntil {uiSleep 0.1; !((_object getVariable ["ARTEK_map_data",-420]) isEqualType -420)};           
-            private _mapData = _object getVariable "ARTEK_map_data";           
-            private _lastPos = _object getVariable ["ARTEK_map_lastPos",[]];           
-              
-            if(count _lastPos > 0) then {           
-                _lastPos params [["_initialScale",0.02],["_initialPos",getPos _object]];           
-                _mapCtrl ctrlMapAnimAdd [0, _initialScale, _initialPos];           
-                ctrlMapAnimCommit _mapCtrl;           
-            };           
-            displayUpdate _display;           
-            ctrlDelete _waitingToLoad;           
-              
-            while{!isNull _object} do {           
-                private _mapData = _object getVariable ["ARTEK_map_data",[]];           
-                if(count _mapData > 0) then {           
-                    (_mapData select 0) params ["_time","_scale","_pos","_delay"];           
-                    _mapCtrl ctrlMapAnimAdd [_time, _scale, _pos];           
-                    ctrlMapAnimCommit _mapCtrl;           
-                    private _tempTimer = 0;           
-                    waitUntil {           
-                        uiSleep 0.1;           
-                        displayUpdate _display;           
-                        _tempTimer = _tempTimer + 0.1;           
-                        _tempTimer >= _time || (_object getVariable ["ARTEK_map_stopAnim",false])           
+                private _unitsToShow = _bluforPlayers + _civPlayers;
+                
+                private _blinkState = (floor (time * 5)) % 2 == 0;       
+                       
+                {           
+                    private _unit = _x;           
+                    private _pos = getPosASL _unit;           
+                    private _dir = getDir _unit;           
+                    private _azimut = round _dir;           
+                    private _unitName = name _unit;           
+                    private _text = format ["%1 {%2°}", _unitName, _azimut];
+                    
+                    private _isUnconscious = false;
+                    private _isInjured = false;
+                    
+                    if(!isNil "ace_common_fnc_getBloodVolumeChange") then {
+                        private _bloodVolume = [_unit] call ace_common_fnc_getBloodVolumeChange;
+                        if(_bloodVolume < -0.3) then {_isInjured = true;};
+                    };
+                    
+                    if(!isNil "ace_medical_fnc_isBleeding") then {
+                        if([_unit] call ace_medical_fnc_isBleeding) then {_isInjured = true;};
+                    };
+                    
+                    _isUnconscious = _unit getVariable ["ACE_isUnconscious", false];
+                           
+                    private _color = [0, 0.3, 0.6, 1];
+                    if (side _unit == civilian) then {
+                        _color = [0.5, 0, 0.5, 1];
+                    };
+                    
+                    if(_isInjured || _isUnconscious) then {
+                        _color = [1, 0, 0, 1];
+                    };
+                    
+                    if(_isUnconscious && !_blinkState) then {
+                        _color = [1, 0, 0, 0.3];
                     };           
-                    _object setVariable ["ARTEK_map_stopAnim",false,true];           
-                    sleep _delay;           
-                    _object setVariable ["ARTEK_map_lastPos",[_scale,_pos],true];           
-                      
-                    private _tempData = _object getVariable ["ARTEK_map_data",[]];           
-                    if(count _tempData > 0) then {           
-                        _tempData deleteAt 0;           
-                        _object setVariable ["ARTEK_map_data",_tempData,true];           
-                    };           
-                } else {           
-                    displayUpdate _display;           
-                    sleep 0.1;           
-                };           
-            };           
-        };           
-              
-        ARTEK_fnc_getLiveMapData = {           
-            params ["_map"];           
-            private _dispName = _map getVariable "ARTEK_map_name";           
-            private _mapDisplay = findDisplay _dispName;           
-            if(isNull _mapDisplay) exitWith {systemChat "Failed to find display with that name."; [];};           
-            private _mapControl = _mapDisplay displayCtrl 10;           
-            private _mapScale = ctrlMapScale _mapControl;           
-            private _mapPos = _mapControl ctrlMapScreenToWorld [0.5,0.5];           
-            [_mapScale, _mapPos]           
-        };           
-              
-        ARTEK_fnc_setMapDisplayData = {           
-            params ["_map","_time","_scale","_pos"];           
-            _scale = [_scale, 0.001,1] call BIS_fnc_clamp;           
-            private _name = _map getVariable ["ARTEK_map_name",""];           
-            if(_name == "") exitWith {false};           
-            private _display = findDisplay _name;           
-            if(isNull _display) exitWith {false};           
-            private _mapCtrl = _display displayCtrl 10;           
-            _map setVariable ["ARTEK_map_data",[],true];           
-            _map setVariable ["ARTEK_map_stopAnim",true,true];           
-            sleep 0.1;           
-            _mapCtrl ctrlMapAnimAdd [_time, _scale, _pos];           
-            ctrlMapAnimCommit _mapCtrl;           
-            displayUpdate _display;           
-            true           
-        };           
-              
-        ARTEK_fnc_addMapDisplayAnimation = {           
-            params ["_map","_time","_scale","_pos",["_delay",0.1]];           
-            _scale = [_scale, 0.001,1] call BIS_fnc_clamp;           
-            private _currentData = _map getVariable ["ARTEK_map_data",[]];           
-            _currentData pushBack [_time,_scale,_pos,_delay];           
-            _map setVariable ["ARTEK_map_data",_currentData,true];           
-        };           
-              
-        ARTEK_fnc_canMoveMap = {           
-            params ["_map","_player"];           
-            if(_map distance _player > 3) exitWith {false};           
-            if(_map getVariable ["ARTEK_LM_moving",false]) exitWith {false};           
-            true;           
-        };           
-              
-        ARTEK_fnc_addMapActions = {           
-            params ["_object"];           
-                  
-            [           
-                _object,           
-                "<t color='#00b604'>Change Map Location</t>",           
-                "\a3\ui_f_oldman\data\IGUI\Cfg\holdactions\map_ca.paa",           
-                "\a3\ui_f_oldman\data\IGUI\Cfg\holdactions\map_ca.paa",           
-                "[_target,_this] call ARTEK_fnc_canMoveMap && !(_target getVariable ['ARTEK_map_didntLoad',false]) && (!isNull (getAssignedCuratorLogic _this) || !(_target getVariable ['ARTEK_map_locked',false]))",           
-                "true",           
-                {},           
-                {},           
-                {           
-                    params ["_target", "_caller", "_actionId", "_arguments"];           
-                    _target setVariable ["ARTEK_LM_moving",true,true];           
-                    ([_target] call ARTEK_fnc_getLiveMapData) params ["_scale","_pos"];           
-                    openMap [true,false];          
-                    private _mapCtrl = findDisplay 12 displayCtrl 51;           
-                    _mapCtrl ctrlMapAnimAdd [0, _scale, _pos];           
-                    ctrlMapAnimCommit _mapCtrl;           
-                    systemChat "Move to where the map should be shown. Press ESC to confirm.";  
-                    systemChat "Right-click on player icons to view vital parameters.";  
-                    systemChat "AI Units and Laser targets are shown in preview.";  
-                          
-                    private _mouseEH = _mapCtrl ctrlAddEventHandler ["MouseButtonDown", {  
-                        params ["_mapCtrl", "_button", "_xPos", "_yPos"];  
-                        if (_button != 1) exitWith {};  
-                          
-                        private _map = (_thisArgs select 0);  
-                        private _worldPos = _mapCtrl ctrlMapScreenToWorld [_xPos, _yPos];  
-                          
-                        private _bluforPlayers = allPlayers select {side _x == west && alive _x};  
-                        private _civPlayers = allPlayers select {side _x == civilian && alive _x};  
-                        private _playersToShow = _bluforPlayers + _civPlayers;  
-                          
-                        private _bluforAI = allUnits select {side _x == west && alive _x && !isPlayer _x};  
-                        private _unitsToShow = _playersToShow + _bluforAI;  
-                          
-                        private _clickedUnit = objNull;  
-                        private _minDist = 0.5;  
-                          
-                        {  
-                            private _unitPos = getPosASL _x;  
-                            private _dist = _worldPos distance2D _unitPos;  
-                            if (_dist < _minDist) then {  
-                                _minDist = _dist;  
-                                _clickedUnit = _x;  
-                            };  
-                        } forEach _unitsToShow;  
-                          
-                        if (!isNull _clickedUnit) then {  
-                            private _unitName = name _clickedUnit;  
-                              
-                            private _damage = damage _clickedUnit;  
-                            private _health = (1 - _damage) * 100;  
-                            private _fatigue = getFatigue _clickedUnit;  
-                            private _fatiguePercent = _fatigue * 100;  
-                            private _oxygen = getOxygenRemaining _clickedUnit;  
-                              
-                            private _pos = getPos _clickedUnit;  
-                            private _gridX = floor ((_pos select 0) / 10);  
-                            private _gridY = floor ((_pos select 1) / 10);  
-                            private _subX = floor (((_pos select 0) % 10) * 10);  
-                            private _subY = floor (((_pos select 1) % 10) * 10);  
-                            private _preciseGrid = format ["%1%2 %3%4", _gridX, _subX, _gridY, _subY];  
-                              
-                            private _aceBleeding = "No";  
-                            private _aceUnconscious = "No";  
-                            private _acePain = "No";  
-                              
-                            if (!isNil "ace_medical_fnc_isBleeding") then {  
-                                _aceBleeding = if ([_clickedUnit] call ace_medical_fnc_isBleeding) then {"<t color='#ff0000'>YES</t>"} else {"No"};  
-                            };  
-                              
-                            if (!isNil "ACE_medical_fnc_isInStableCondition") then {  
-                                _aceUnconscious = if (_clickedUnit getVariable ["ACE_isUnconscious", false]) then {"<t color='#ff0000'>YES</t>"} else {"No"};  
-                            };  
-                              
-                            if (!isNil "ace_medical_fnc_getPain") then {  
-                                private _pain = [_clickedUnit] call ace_medical_fnc_getPain;  
-                                _acePain = if (_pain > 0.5) then {format ["<t color='#ffaa00'>%1%2</t>", round (_pain * 100), "%"]} else {format ["%1%2", round (_pain * 100), "%"]};  
-                            };  
-                              
-                            private _menuText = format [  
-                                "<t size='1.2' color='#00ff00'>%1</t><br/>" +  
-                                "<t size='0.9'>─────────────────</t><br/>" +  
-                                "<t size='1'>Health: </t><t size='1' color='%2'>%3%4</t><br/>" +  
-                                "<t size='1'>Fatigue: </t><t size='1' color='%5'>%6%4</t><br/>" +  
-                                "<t size='1'>Oxygen: </t><t size='1' color='%7'>%8%4</t><br/>" +  
-                                "<t size='1'>GPS: </t><t size='1' color='#ffff00'>%9</t><br/>" +  
-                                "<t size='0.9'>─────────────────</t><br/>" +  
-                                "<t size='1'>ACE Bleeding: %10</t><br/>" +  
-                                "<t size='1'>ACE Unconscious: %11</t><br/>" +  
-                                "<t size='1'>ACE Pain: %12</t>",  
-                                _unitName,  
-                                if (_health > 70) then {"#00ff00"} else {if (_health > 40) then {"#ffaa00"} else {"#ff0000"}},  
-                                round _health,  
-                                "%",  
-                                if (_fatiguePercent < 30) then {"#00ff00"} else {if (_fatiguePercent < 70) then {"#ffaa00"} else {"#ff0000"}},  
-                                round _fatiguePercent,  
-                                if (_oxygen > 0.7) then {"#00ff00"} else {if (_oxygen > 0.3) then {"#ffaa00"} else {"#ff0000"}},  
-                                round (_oxygen * 100),  
-                                _preciseGrid,  
-                                _aceBleeding,  
-                                _aceUnconscious,  
-                                _acePain  
-                            ];  
-                              
-                            hint parseText _menuText;  
-                              
-                            [] spawn {  
-                                sleep 5;  
-                                hintSilent "";  
-                            };  
-                        };  
-                    }, _target];  
-                          
-                    private _drawEH = _mapCtrl ctrlAddEventHandler ["Draw", {         
-                        private _mapCtrl = _this select 0;         
-                        private _map = (_thisArgs select 0);      
-                              
-                        private _bluforPlayers = allPlayers select {side _x == west && alive _x};          
-                        private _civPlayers = allPlayers select {side _x == civilian && alive _x};          
-                        private _playersToShow = _bluforPlayers + _civPlayers;          
-                              
-                        private _bluforAI = allUnits select {side _x == west && alive _x && !isPlayer _x};      
-                        private _unitsToShow = _playersToShow + _bluforAI;      
-                                  
-                        {          
-                            private _unit = _x;          
-                            private _pos = getPosASL _unit;          
-                            private _dir = getDir _unit;          
-                            private _azimut = round _dir;          
-                            private _unitName = name _unit;          
-                            private _text = format ["%1 {%2°}", _unitName, _azimut];          
-                                  
-                            private _color = if (side _unit == west) then {        
-                                [0, 0.3, 0.6, 1]          
-                            } else {        
-                                [0.5, 0, 0.5, 1]            
-                            };          
-                                  
-                            _mapCtrl drawIcon [          
-                                "\A3\ui_f\data\map\markers\military\circle_ca.paa",          
-                                _color,          
-                                _pos,          
-                                16,          
-                                16,          
-                                0,          
-                                "",          
-                                2,          
-                                0.04,          
-                                "RobotoCondensedBold",          
-                                "center"          
-                            ];          
-                                  
-                            _mapCtrl drawIcon [          
-                                "\A3\ui_f\data\map\markers\military\arrow2_ca.paa",          
-                                _color,          
-                                _pos,          
-                                12,          
-                                12,          
-                                _dir,          
-                                "",          
-                                2,          
-                                0.04,          
-                                "RobotoCondensedBold",          
-                                "center"          
-                            ];          
-                                  
-                            private _textOffset = 28;      
-                            private _textPos = _mapCtrl ctrlMapScreenToWorld (_mapCtrl posWorldToScreen _pos vectorAdd [0, _textOffset * pixelH]);      
-                          
-                            _mapCtrl drawIcon [          
-                                "#(argb,8,8,3)color(0,0,0,0)",          
-                                _color,          
-                                _textPos,          
-                                0,          
-                                0,          
-                                0,          
-                                _text,          
-                                2,          
-                                0.04,          
-                                "RobotoCondensedBold",          
-                                "center"          
-                            ];          
-                                  
-                        } forEach _unitsToShow;         
-                              
-                        private _allVehicles = vehicles + allUnits;      
-                        {      
-                            private _vehicle = _x;      
-                            private _laserTarget = laserTarget _vehicle;      
-                            if(!isNull _laserTarget) then {      
-                                private _laserPos = getPosASL _laserTarget;      
-                                private _sourceName = "";      
-                                if(isPlayer _vehicle) then {      
-                                    _sourceName = name _vehicle;      
-                                } else {      
-                                    private _crew = crew _vehicle;      
-                                    if(count _crew > 0) then {      
-                                        _sourceName = getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName");      
-                                    } else {      
-                                        _sourceName = getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName");      
-                                    };      
-                                };      
-                                private _laserText = format ["%1", _sourceName];      
-                                      
-                                _mapCtrl drawIcon [      
-                                    "\A3\ui_f\data\map\markers\military\destroy_ca.paa",      
-                                    [1, 0, 0, 1],      
-                                    _laserPos,      
-                                    12,      
-                                    12,      
-                                    0,      
-                                    "",      
-                                    2,      
-                                    0.04,      
-                                    "RobotoCondensedBold",      
-                                    "center"      
-                                ];      
-                                      
-                                private _laserTextOffset = 28;      
-                                private _laserTextPos = _mapCtrl ctrlMapScreenToWorld (_mapCtrl posWorldToScreen _laserPos vectorAdd [0, _laserTextOffset * pixelH]);      
-                                      
-                                _mapCtrl drawIcon [      
-                                    "#(argb,8,8,3)color(0,0,0,0)",      
-                                    [1, 0, 0, 1],      
-                                    _laserTextPos,      
-                                    0,      
-                                    0,      
-                                    0,      
-                                    _laserText,      
-                                    2,      
-                                    0.04,      
-                                    "RobotoCondensedBold",      
-                                    "center"      
-                                ];      
-                            };      
-                        } forEach _allVehicles;      
-                    }, _target];         
-                              
-                    private _mapEH = addMissionEventHandler ["Map", {           
-                        params ["_mapIsOpened", "_mapIsForced"];           
-                        _thisArgs params ["_target", "_drawEH", "_mouseEH", "_mapCtrl"];           
-                        if(!_mapIsOpened) then {           
-                            private _scale = ctrlMapScale _mapCtrl;           
-                            private _pos = _mapCtrl ctrlMapScreenToWorld [0.4,0.5];           
-                            [_target,0,_scale * 1.75,_pos] spawn ARTEK_fnc_addMapDisplayAnimation;           
-                            _target setVariable ["ARTEK_LM_moving",false,true];           
-                            _mapCtrl ctrlRemoveEventHandler ["Draw", _drawEH];  
-                            _mapCtrl ctrlRemoveEventHandler ["MouseButtonDown", _mouseEH];  
-                            removeMissionEventHandler ["Map",_thisEventHandler];           
-                        };           
-                    },[_target, _drawEH, _mouseEH, _mapCtrl]];           
-                },           
-                {},           
-                [],           
-                0.5,           
-                1000,           
-                false           
-            ] call BIS_fnc_holdActionAdd;           
-                  
-            [           
-                _object,           
-                "Reload Map",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_hack_ca.paa",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_hack_ca.paa",           
-                "_target distance _this < 3",           
-                "true",           
-                {},           
-                {},           
-                {           
-                    params ["_target", "_caller", "_actionId", "_arguments"];           
-                    private _name = _target getVariable ["ARTEK_map_name",""];           
-                    if(_name == "") exitWith {};           
-                    systemChat "Reloading map...";           
-                    [_name,_target] spawn ARTEK_fnc_makeMapDisplayCtrl;           
-                },           
-                {},           
-                [],           
-                0.25,           
-                999,           
-                false           
-            ] call BIS_fnc_holdActionAdd;           
-                  
-            [           
-                _object,           
-                "Retry Map Creation",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_hack_ca.paa",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_hack_ca.paa",           
-                "_target distance _this < 3 && _target getVariable ['ARTEK_map_didntLoad',false]",           
-                "true",           
-                {},           
-                {},           
-                {           
-                    params ["_target", "_caller", "_actionId", "_arguments"];           
-                    private _name = _target getVariable ["ARTEK_map_name",""];           
-                    if(_name == "") exitWith {};           
-                    [_name,_target] spawn ARTEK_fnc_makeMapDisplayCtrl;           
-                    _target setVariable ['ARTEK_map_didntLoad',false];           
-                },           
-                {},           
-                [],           
-                0.25,           
-                1001,           
-                false           
-            ] call BIS_fnc_holdActionAdd;           
-              
-            [           
-                _object,           
-                "Lock Map View",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_secure_ca.paa",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_secure_ca.paa",           
-                "_target distance _this < 3 && !(_target getVariable ['ARTEK_map_didntLoad',false]) && !isNull (getAssignedCuratorLogic _this) && !(_target getVariable ['ARTEK_map_locked',false])",           
-                "true",           
-                {},           
-                {},           
-                {           
-                    params ["_target", "_caller", "_actionId", "_arguments"];           
-                    _target setVariable ["ARTEK_map_locked",true,true];           
-                    systemChat "Map view locked";           
-                },           
-                {},           
-                [],           
-                0.25,           
-                997,           
-                false           
-            ] call BIS_fnc_holdActionAdd;           
-              
-            [           
-                _object,           
-                "Unlock Map View",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_secure_ca.paa",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_secure_ca.paa",           
-                "_target distance _this < 3 && !(_target getVariable ['ARTEK_map_didntLoad',false]) && !isNull (getAssignedCuratorLogic _this) && (_target getVariable ['ARTEK_map_locked',false])",           
-                "true",           
-                {},           
-                {},           
-                {           
-                    params ["_target", "_caller", "_actionId", "_arguments"];           
-                    _target setVariable ["ARTEK_map_locked",false,true];           
-                    systemChat "Map view unlocked";           
-                },           
-                {},         
-                [],           
-                0.25,           
-                997,           
-                false           
-            ] call BIS_fnc_holdActionAdd;           
-                  
-            private _aiActionID = [           
-                _object,           
-                "AI Unit BLUFORCE: OFF",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_connect_ca.paa",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_connect_ca.paa",           
-                "_target distance _this < 3 && !(_target getVariable ['ARTEK_map_didntLoad',false])",           
-                "true",           
-                {    
-                    params ["_target", "_caller", "_actionId", "_arguments"];    
-                    private _showAI = _target getVariable ["ARTEK_map_showAI",false];    
-              
-                    if (_showAI) then {    
-                        _target setUserActionText [_actionId, "<t color='#0056cc'>AI Unit BLUFORCE: ON</t>", "<t color='#0056cc'>AI Unit BLUFORCE: ON</t>"];    
-                    } else {    
-                        _target setUserActionText [_actionId, "AI Unit BLUFORCE: OFF", "AI Unit BLUFORCE: OFF"];    
-                    };    
-                },           
-                {},           
-                {           
-                    params ["_target", "_caller", "_actionId", "_arguments"];           
-                    private _current = _target getVariable ["ARTEK_map_showAI",false];      
-                    _target setVariable ["ARTEK_map_showAI",!_current,true];      
-                    if(!_current) then {      
-                        systemChat "AI Unit BLUFORCE: ON";      
-                    } else {      
-                        systemChat "AI Units: OFF";      
-                    };      
-                },           
-                {},    
-                [],           
-                0.25,           
-                996,           
-                false           
-            ] call BIS_fnc_holdActionAdd;    
-              
-            _object setVariable ["ARTEK_aiActionID", _aiActionID];    
-                  
-            private _laserActionID = [           
-                _object,           
-                "View Laser Designator",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_requestleadership_ca.paa",           
-                "a3\ui_f\data\igui\cfg\holdactions\holdaction_requestleadership_ca.paa",           
-                "_target distance _this < 3 && !(_target getVariable ['ARTEK_map_didntLoad',false])",           
-                "true",           
-                {    
-                    params ["_target", "_caller", "_actionId", "_arguments"];    
-                    private _showLasers = _target getVariable ["ARTEK_map_showLasers",false];    
-              
-                    if (_showLasers) then {    
-                        _target setUserActionText [_actionId, "<t color='#ff0000'>Laser Designator: ON</t>", "<t color='#ff0000'>Laser Designator: ON</t>"];    
-                    } else {    
-                        _target setUserActionText [_actionId, "View Laser Designator", "View Laser Designator"];    
-                    };    
-                },           
-                {},           
-                {           
-                    params ["_target", "_caller", "_actionId", "_arguments"];           
-                    private _current = _target getVariable ["ARTEK_map_showLasers",false];      
-                    _target setVariable ["ARTEK_map_showLasers",!_current,true];      
-                    if(!_current) then {      
-                        systemChat "Laser Targets: ON";      
-                    } else {      
-                        systemChat "Laser Targets: OFF";      
-                    };      
-                },           
-                {},    
-                [],           
-                0.25,           
-                995,           
-                false           
-            ] call BIS_fnc_holdActionAdd;    
-              
-            _object setVariable ["ARTEK_laserActionID", _laserActionID];    
-                  
-            [_object] spawn {    
-                params ["_object"];    
-                while {!isNull _object} do {    
-                    private _aiActionID = _object getVariable ["ARTEK_aiActionID", -1];    
-                    private _laserActionID = _object getVariable ["ARTEK_laserActionID", -1];    
+                           
+                    _mapCtrl drawIcon [           
+                        "\A3\ui_f\data\map\markers\military\circle_ca.paa",           
+                        _color,           
+                        _pos,           
+                        16,           
+                        16,           
+                        0,           
+                        "",           
+                        2,           
+                        0.04,           
+                        "RobotoCondensedBold",           
+                        "center"           
+                    ];           
+                           
+                    _mapCtrl drawIcon [           
+                        "\A3\ui_f\data\map\markers\military\arrow2_ca.paa",           
+                        _color,           
+                        _pos,           
+                        12,           
+                        12,           
+                        _dir,           
+                        "",           
+                        2,           
+                        0.04,           
+                        "RobotoCondensedBold",           
+                        "center"           
+                    ];           
+                           
+                    private _textOffset = 28;       
+                    private _textPos = _mapCtrl ctrlMapScreenToWorld (_mapCtrl posWorldToScreen _pos vectorAdd [0, _textOffset * pixelH]);       
+                   
+                    _mapCtrl drawIcon [           
+                        "#(argb,8,8,3)color(0,0,0,0)",           
+                        _color,           
+                        _textPos,           
+                        0,           
+                        0,           
+                        0,           
+                        _text,           
+                        2,           
+                        0.04,           
+                        "RobotoCondensedBold",           
+                        "center"           
+                    ];           
+                           
+                } forEach _unitsToShow;           
+                   
+                private _allVehicles = vehicles + allUnits;       
+                {       
+                    private _vehicle = _x;
+                    private _laserTarget = laserTarget _vehicle;
+                    
+                    if(!isNull _laserTarget) then {       
+                        private _laserPos = getPosASL _laserTarget;       
+                        private _sourceName = "";       
+                        if(isPlayer _vehicle) then {       
+                            _sourceName = name _vehicle;       
+                        } else {       
+                            private _crew = crew _vehicle;       
+                            if(count _crew > 0) then {       
+                                _sourceName = getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName");       
+                            } else {       
+                                _sourceName = getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName");       
+                            };       
+                        };       
+                        private _laserText = format ["%1", _sourceName];       
+                               
+                        _mapCtrl drawIcon [       
+                            "\A3\ui_f\data\map\markers\military\destroy_ca.paa",       
+                            [1, 0, 0, 1],       
+                            _laserPos,       
+                            16,       
+                            16,       
+                            0,       
+                            "",       
+                            2,       
+                            0.04,       
+                            "RobotoCondensedBold",       
+                            "center"       
+                        ];       
+                               
+                        private _laserTextOffset = 28;       
+                        private _laserTextPos = _mapCtrl ctrlMapScreenToWorld (_mapCtrl posWorldToScreen _laserPos vectorAdd [0, _laserTextOffset * pixelH]);       
+                               
+                        _mapCtrl drawIcon [       
+                            "#(argb,8,8,3)color(0,0,0,0)",       
+                            [1, 0, 0, 1],       
+                            _laserTextPos,       
+                            0,       
+                            0,       
+                            0,       
+                            _laserText,       
+                            2,       
+                            0.04,       
+                            "RobotoCondensedBold",       
+                            "center"       
+                        ];       
+                    };       
+                } forEach _allVehicles;       
+            }];            
+            _mapCtrl setVariable ["ARTEK_map_mapEvent",_event];            
+               
+            waitUntil {uiSleep 0.1; !((_object getVariable ["ARTEK_map_data",-420]) isEqualType -420)};            
+            (_object getVariable "ARTEK_map_data") params ["_time","_scale","_pos"];            
+            (_object getVariable ["ARTEK_map_lastPos",[]]) params [["_initialScale",0.02],["_initialPos",getPos _object]];            
+            _mapCtrl ctrlMapAnimAdd [0, _initialScale, _initialPos];            
+            ctrlMapAnimCommit _mapCtrl;            
+            displayUpdate _display;            
+            ctrlDelete _waitingToLoad;            
+               
+            while{!isNull _object} do {            
+                if(count (_object getVariable ["ARTEK_map_data",[]]) > 0) then {            
+                    ((_object getVariable "ARTEK_map_data") select 0) params ["_time","_scale","_pos","_delay"];            
+                    _mapCtrl ctrlMapAnimAdd [_time, _scale, _pos];            
+                    ctrlMapAnimCommit _mapCtrl;            
+                    private _tempTimer = 0;            
+                    waitUntil {            
+                        uiSleep 0.1;            
+                        displayUpdate _display;            
+                        _tempTimer = _tempTimer + 0.1;            
+                        if(_tempTimer >= _time) then {            
+                            private _tempData = _object getVariable ["ARTEK_map_data",[]];            
+                            _tempData deleteAt 0;            
+                            _object setVariable ["ARTEK_map_data",_tempData,true];            
+                        };            
+                        _tempTimer >= _time || (_object getVariable ["ARTEK_map_stopAnim",false])            
+                    };            
+                    _object setVariable ["ARTEK_map_stopAnim",false,true];            
+                    sleep _delay;            
+                    _object setVariable ["ARTEK_map_lastPos",[_scale,_pos],true];            
+                } else {            
+                    displayUpdate _display;            
+                    sleep 0.1;            
+                };            
+            };            
+        };            
+               
+        ARTEK_fnc_getLiveMapData = {            
+            params ["_map"];            
+            private _dispName = _map getVariable "ARTEK_map_name";            
+            private _mapDisplay = findDisplay _dispName;            
+            if(isNull _mapDisplay) exitWith {[];};            
+            private _mapControl = _mapDisplay displayCtrl 10;            
+            private _mapScale = ctrlMapScale _mapControl;            
+            private _mapPos = _mapControl ctrlMapScreenToWorld [0.5,0.5];            
+            [_mapScale, _mapPos]            
+        };            
+               
+        ARTEK_fnc_setMapDisplayData = {            
+            params ["_map","_time","_scale","_pos"];            
+            _scale = [_scale, 0.001,1] call BIS_fnc_clamp;            
+            private _name = _map getVariable ["ARTEK_map_name",""];            
+            if(_name == "") exitWith {false};            
+            private _display = findDisplay _name;            
+            if(isNull _display) exitWith {false};            
+            private _mapCtrl = _display displayCtrl 10;            
+            _map setVariable ["ARTEK_map_data",[],true];            
+            _map setVariable ["ARTEK_map_stopAnim",true,true];            
+            sleep 0.1;            
+            _mapCtrl ctrlMapAnimAdd [_time, _scale, _pos];            
+            ctrlMapAnimCommit _mapCtrl;            
+            displayUpdate _display;            
+            true            
+        };            
+               
+        ARTEK_fnc_addMapDisplayAnimation = {            
+            params ["_map","_time","_scale","_pos",["_delay",0.1]];            
+            _scale = [_scale, 0.001,1] call BIS_fnc_clamp;            
+            private _currentData = _map getVariable ["ARTEK_map_data",[]];            
+            _currentData pushBack [_time,_scale,_pos,_delay];            
+            _map setVariable ["ARTEK_map_data",_currentData,true];            
+        };            
+               
+        ARTEK_fnc_canMoveMap = {            
+            params ["_map","_player"];            
+            if(_map distance _player > 3) exitWith {false};            
+            if(_map getVariable ["ARTEK_LM_moving",false]) exitWith {false};            
+            true;            
+        };            
+               
+        ARTEK_fnc_addMapActions = {            
+            params ["_object"];            
+            
+            _object addAction [
+                "<t color='#00b604'>Change Map Location</t>",
+                {
+                    params ["_target", "_caller", "_actionId", "_arguments"];
+                    _target setVariable ["ARTEK_LM_moving",true,true];
+                    ([_target] call ARTEK_fnc_getLiveMapData) params ["_scale","_pos"];
+                    openMap [true,false];
+                    private _mapCtrl = findDisplay 12 displayCtrl 51;
+                    _mapCtrl ctrlMapAnimAdd [0, _scale, _pos];
+                    ctrlMapAnimCommit _mapCtrl;
+                    
+                    private _mouseEH = _mapCtrl ctrlAddEventHandler ["MouseButtonDown", {
+                        params ["_mapCtrl", "_button", "_xPos", "_yPos"];
+                        if (_button != 1) exitWith {};
                         
-                    if (_aiActionID != -1) then {    
-                        private _showAI = _object getVariable ["ARTEK_map_showAI",false];    
-                        if (_showAI) then {    
-                            _object setUserActionText [_aiActionID, "<t color='#0056cc'>AI Unit BLUFORCE: ON</t>", "<t color='#0056cc'>AI Unit BLUFORCE: ON</t>"];    
-                        } else {    
-                            _object setUserActionText [_aiActionID, "AI Unit BLUFORCE: OFF", "AI Unit BLUFORCE: OFF"];    
-                        };    
-                    };    
+                        private _target = _thisArgs select 0;
+                        private _worldPos = _mapCtrl ctrlMapScreenToWorld [_xPos, _yPos];
                         
-                    if (_laserActionID != -1) then {    
-                        private _showLasers = _object getVariable ["ARTEK_map_showLasers",false];    
-                        if (_showLasers) then {    
-                            _object setUserActionText [_laserActionID, "<t color='#ff0000'>Laser Designator: ON</t>", "<t color='#ff0000'>Laser Designator: ON</t>"];    
-                        } else {    
-                            _object setUserActionText [_laserActionID, "View Laser Designator", "View Laser Designator"];    
-                        };    
-                    };    
+                        private _bluforPlayers = allPlayers select {
+                            side _x == west && alive _x && ("ItemcTab" in (items _x + assignedItems _x))
+                        };
+                        private _civPlayers = allPlayers select {
+                            side _x == civilian && alive _x && ("ItemcTab" in (items _x + assignedItems _x))
+                        };
+                        private _unitsToShow = _bluforPlayers + _civPlayers;
                         
-                    sleep 1;    
-                };    
-            };    
-        };           
-              
-        ARTEK_fnc_getMapTextureIndex = {           
-            params ["_object"];           
-            private _out = ["UserTexture1m_F",0,[0,0,1,1],[0,-0.1,0]];           
-            {           
-                _x params ["_type","_index","_texturePos","_frontPos"];           
-                if((typeOf _object) isKindOf _type) exitWith {_out = _x;};           
-            }forEach [           
-                ["Land_Laptop_03_base_F",1,[0,0,1,1],[0,0,0.1]],           
-                ["Land_MapBoard_F",0,[0,0,1,1],[0,-0.4,0.5]],           
-                ["Land_Billboard_F",0,[0,0,1,1],[0,-0.7,1.25]],           
-                ["UserTexture1m_F",0,[0,0,1,1],[0,-0.1,0]],           
-                ["Land_WallSign_01_base_F",1,[0,-0.15,1,1],[0,-0.1,0.1]],           
-                ["Canvas_01_base_F",0,[0,0,1,1],[0,-0.1,0.1]],           
-                ["Land_BriefingRoomDesk_01_F",0,[0,0.25,1,1],[0,0,1.0]],           
-                ["Land_BriefingRoomScreen_01_F",0,[0,0,1,0.6],[0,0.3,1.8]],           
-                ["Land_Laptop_unfolded_F",0,[0,0,1,1],[0,-0.05,0.1]],           
-                ["Land_PCSet_01_screen_F",0,[0,0,1,1],[0,-0.1,0.1]],           
-                ["Land_TripodScreen_01_large_F",0,[0,0,1,1],[0,0.5,0.5]],       
-                ["Land_TripodScreen_01_large_black_F",0,[0,0,1,10],[0,0.5,0.5]]           
-            ];           
-            _out           
-        };           
-              
-        ARTEK_EP_fnc_addToExecQueue = {           
-            params ["_parameters","_function"];           
-            if(isNil "ARTEK_EP_ExecQueueStarted") then {           
-                ARTEK_EP_ExecQueueStarted = false;           
-            };           
-            if(isNil "ARTEK_EP_ExecQueue") then {           
-                ARTEK_EP_ExecQueue = [];           
-            };    
-            ARTEK_EP_ExecQueue pushBack [_parameters,_function];           
-            if(!ARTEK_EP_ExecQueueStarted) then {           
-                ARTEK_EP_ExecQueueStarted = true;           
-                [] spawn ARTEK_EP_fnc_startExecQueue;           
-            };           
-        };           
-              
-        ARTEK_EP_fnc_startExecQueue = {           
-            while {count ARTEK_EP_ExecQueue > 0} do {           
-                (ARTEK_EP_ExecQueue select 0) params ["_parameters","_function"];           
-                private _scriptHandle = _parameters spawn _function;           
-                waitUntil {scriptDone _scriptHandle};           
-                ARTEK_EP_ExecQueue deleteAt 0;           
-            };           
-            ARTEK_EP_ExecQueueStarted = false;           
-        };           
-    }) splitString "";           
-              
-    _value deleteAt (count _value - 1);           
-    _value deleteAt 0;           
-              
-    _value = _value joinString "";           
-    _value = _value + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";           
-    _value = _value splitString "";           
-              
-    missionNamespace setVariable [_varName,_value,true];           
-              
-    [[_varName], {           
-        params ["_ding"];           
-        private _data = missionNamespace getVariable [_ding,[]];           
-        _data = _data joinString "";           
-        private _id = addMissionEventhandler ["EachFrame", _data];           
-    }] remoteExec ['spawn',0,_myJIPCode];           
-};           
-              
-this spawn {           
-    waitUntil {!isNil "ARTEK_fnc_addMapActions"};           
-    sleep 0.5;           
-    private _name = _this getVariable "ARTEK_map_name";           
-    if(!isNil "_name") exitWith {};           
-    [_this] spawn ARTEK_fnc_makeNewMapDisplay;           
+                        private _clickedUnit = objNull;
+                        private _minDist = 0.5;
+                        
+                        {
+                            private _unitPos = getPosASL _x;
+                            private _dist = _worldPos distance2D _unitPos;
+                            if (_dist < _minDist) then {
+                                _minDist = _dist;
+                                _clickedUnit = _x;
+                            };
+                        } forEach _unitsToShow;
+                        
+                        if (!isNull _clickedUnit) then {
+                            private _unitName = name _clickedUnit;
+                            
+                            private _nameColor = "#0099ff";
+                            if(side _clickedUnit == west) then {
+                                _nameColor = "#0099ff";
+                            };
+                            if(side _clickedUnit == civilian) then {
+                                _nameColor = "#9900ff";
+                            };
+                            
+                            private _pos = getPos _clickedUnit;
+                            private _gridX = floor ((_pos select 0) / 100);
+                            private _gridY = floor ((_pos select 1) / 100);
+                            private _subGridX = floor (((_pos select 0) % 100) / 10);
+                            private _subGridY = floor (((_pos select 1) % 100) / 10);
+                            private _preciseX = floor ((_pos select 0) % 10);
+                            private _preciseY = floor ((_pos select 1) % 10);
+                            private _gridStr = format ["%1%2%3 %4%5%6", _gridX, _subGridX, _preciseX, _gridY, _subGridY, _preciseY];
+                            
+                            private _heartRate = "N/A";
+                            private _bloodPressure = "N/A";
+                            private _isBleeding = "No";
+                            private _isUnconscious = "No";
+                            
+                            private _hr = _clickedUnit getVariable ["ace_medical_heartRate", 80];
+                            _heartRate = format ["%1 BPM", round _hr];
+                            
+                            private _bpSystolic = _clickedUnit getVariable ["ace_medical_bloodPressure", [120, 80]] select 0;
+                            private _bpDiastolic = _clickedUnit getVariable ["ace_medical_bloodPressure", [120, 80]] select 1;
+                            _bloodPressure = format ["%1/%2", round _bpSystolic, round _bpDiastolic];
+                            
+                            if (!isNil "ace_medical_fnc_isBleeding") then {
+                                _isBleeding = if ([_clickedUnit] call ace_medical_fnc_isBleeding) then {"<t color='#ff0000'>YES</t>"} else {"No"};
+                            };
+                            
+                            _isUnconscious = if (_clickedUnit getVariable ["ACE_isUnconscious", false]) then {"<t color='#ff0000'>YES</t>"} else {"No"};
+                            
+                            private _menuText = format [
+                                "<t size='1.2' color='%1'>%2</t><br/>" +
+                                "<t size='0.9'>─────────────────</t><br/>" +
+                                "<t size='1'>Heart Rate: </t><t size='1' color='#ffffff'>%3</t><br/>" +
+                                "<t size='1'>Blood Pressure: </t><t size='1' color='#ffffff'>%4</t><br/>" +
+                                "<t size='1'>Bleeding: %5</t><br/>" +
+                                "<t size='1'>Unconscious: %6</t><br/>" +
+                                "<t size='0.9'>─────────────────</t><br/>" +
+                                "<t size='1'>Grid: </t><t size='1' color='#ffff00'>%7</t>",
+                                _nameColor,
+                                _unitName,
+                                _heartRate,
+                                _bloodPressure,
+                                _isBleeding,
+                                _isUnconscious,
+                                _gridStr
+                            ];
+                            
+                            hint parseText _menuText;
+                            
+                            [] spawn {
+                                sleep 7;
+                                hintSilent "";
+                            };
+                        };
+                    }, _target];
+                    
+                    private _drawEH = _mapCtrl ctrlAddEventHandler ["Draw", {
+                        params ["_mapCtrl"];
+                        private _target = _thisArgs select 0;
+                        
+                        private _bluforPlayers = allPlayers select {
+                            side _x == west && alive _x && ("ItemcTab" in (items _x + assignedItems _x))
+                        };
+                        private _civPlayers = allPlayers select {
+                            side _x == civilian && alive _x && ("ItemcTab" in (items _x + assignedItems _x))
+                        };
+                        private _unitsToShow = _bluforPlayers + _civPlayers;
+                        
+                        private _blinkState = (floor (time * 5)) % 2 == 0;
+                        
+                        {
+                            private _unit = _x;
+                            private _pos = getPosASL _unit;
+                            private _dir = getDir _unit;
+                            private _azimut = round _dir;
+                            private _unitName = name _unit;
+                            private _text = format ["%1 {%2°}", _unitName, _azimut];
+                            
+                            private _isUnconscious = false;
+                            private _isInjured = false;
+                            
+                            if(!isNil "ace_common_fnc_getBloodVolumeChange") then {
+                                private _bloodVolume = [_unit] call ace_common_fnc_getBloodVolumeChange;
+                                if(_bloodVolume < -0.3) then {_isInjured = true;};
+                            };
+                            
+                            if(!isNil "ace_medical_fnc_isBleeding") then {
+                                if([_unit] call ace_medical_fnc_isBleeding) then {_isInjured = true;};
+                            };
+                            
+                            _isUnconscious = _unit getVariable ["ACE_isUnconscious", false];
+                            
+                            private _color = [0, 0.3, 0.6, 1];
+                            if (side _unit == civilian) then {
+                                _color = [0.5, 0, 0.5, 1];
+                            };
+                            
+                            if(_isInjured || _isUnconscious) then {
+                                _color = [1, 0, 0, 1];
+                            };
+                            
+                            if(_isUnconscious && !_blinkState) then {
+                                _color = [1, 0, 0, 0.3];
+                            };
+                            
+                            _mapCtrl drawIcon [
+                                "\A3\ui_f\data\map\markers\military\circle_ca.paa",
+                                _color,
+                                _pos,
+                                24,
+                                24,
+                                0,
+                                "",
+                                2,
+                                0.04,
+                                "RobotoCondensedBold",
+                                "center"
+                            ];
+                            
+                            _mapCtrl drawIcon [
+                                "\A3\ui_f\data\map\markers\military\arrow2_ca.paa",
+                                _color,
+                                _pos,
+                                18,
+                                18,
+                                _dir,
+                                "",
+                                2,
+                                0.04,
+                                "RobotoCondensedBold",
+                                "center"
+                            ];
+                            
+                            private _textOffset = 35;
+                            private _textPos = _mapCtrl ctrlMapScreenToWorld (_mapCtrl posWorldToScreen _pos vectorAdd [0, _textOffset * pixelH]);
+                            
+                            _mapCtrl drawIcon [
+                                "#(argb,8,8,3)color(0,0,0,0)",
+                                _color,
+                                _textPos,
+                                0,
+                                0,
+                                0,
+                                _text,
+                                2,
+                                0.045,
+                                "RobotoCondensedBold",
+                                "center"
+                            ];
+                            
+                        } forEach _unitsToShow;
+                        
+                        private _allVehicles = vehicles + allUnits;
+                        {
+                            private _vehicle = _x;
+                            private _laserTarget = laserTarget _vehicle;
+                            
+                            if(!isNull _laserTarget) then {
+                                private _laserPos = getPosASL _laserTarget;
+                                private _sourceName = "";
+                                if(isPlayer _vehicle) then {
+                                    _sourceName = name _vehicle;
+                                } else {
+                                    private _crew = crew _vehicle;
+                                    if(count _crew > 0) then {
+                                        _sourceName = getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName");
+                                    } else {
+                                        _sourceName = getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName");
+                                    };
+                                };
+                                private _laserText = format ["%1", _sourceName];
+                                
+                                _mapCtrl drawIcon [
+                                    "\A3\ui_f\data\map\markers\military\destroy_ca.paa",
+                                    [1, 0, 0, 1],
+                                    _laserPos,
+                                    24,
+                                    24,
+                                    0,
+                                    "",
+                                    2,
+                                    0.04,
+                                    "RobotoCondensedBold",
+                                    "center"
+                                ];
+                                
+                                private _laserTextOffset = 35;
+                                private _laserTextPos = _mapCtrl ctrlMapScreenToWorld (_mapCtrl posWorldToScreen _laserPos vectorAdd [0, _laserTextOffset * pixelH]);
+                                
+                                _mapCtrl drawIcon [
+                                    "#(argb,8,8,3)color(0,0,0,0)",
+                                    [1, 0, 0, 1],
+                                    _laserTextPos,
+                                    0,
+                                    0,
+                                    0,
+                                    _laserText,
+                                    2,
+                                    0.045,
+                                    "RobotoCondensedBold",
+                                    "center"
+                                ];
+                            };
+                        } forEach _allVehicles;
+                    }, _target];
+                    
+                    addMissionEventHandler ["Map", {
+                        params ["_mapIsOpened", "_mapIsForced"];
+                        _thisArgs params ["_target", "_drawEH", "_mouseEH", "_mapCtrl"];
+                        if(!_mapIsOpened) then {
+                            private _scale = ctrlMapScale _mapCtrl;
+                            private _pos = _mapCtrl ctrlMapScreenToWorld [0.4,0.5];
+                            [_target,0,_scale * 1.75,_pos] spawn ARTEK_fnc_addMapDisplayAnimation;
+                            _target setVariable ["ARTEK_LM_moving",false,true];
+                            _mapCtrl ctrlRemoveEventHandler ["Draw", _drawEH];
+                            _mapCtrl ctrlRemoveEventHandler ["MouseButtonDown", _mouseEH];
+                            removeMissionEventHandler ["Map",_thisEventHandler];
+                        };
+                    },[_target, _drawEH, _mouseEH, _mapCtrl]];
+                },
+                nil,
+                10,
+                true,
+                true,
+                "",
+                "[_target,_this] call ARTEK_fnc_canMoveMap && !(_target getVariable ['ARTEK_map_didntLoad',false]) && (!isNull (getAssignedCuratorLogic _this) || !(_target getVariable ['ARTEK_map_locked',false]))",
+                3
+            ];
+            
+            _object addAction [
+                "Reload Map",
+                {
+                    params ["_target", "_caller", "_actionId", "_arguments"];
+                    private _name = _target getVariable ["ARTEK_map_name",""];
+                    if(_name == "") exitWith {};
+                    [_name,_target] spawn ARTEK_fnc_makeMapDisplayCtrl;
+                },
+                nil,
+                9,
+                true,
+                true,
+                "",
+                "_target distance _this < 3",
+                3
+            ];
+            
+            _object addAction [
+                "Retry Map Creation",
+                {
+                    params ["_target", "_caller", "_actionId", "_arguments"];
+                    private _name = _target getVariable ["ARTEK_map_name",""];
+                    if(_name == "") exitWith {};
+                    [_name,_target] spawn ARTEK_fnc_makeMapDisplayCtrl;
+                    _target setVariable ['ARTEK_map_didntLoad',false];
+                },
+                nil,
+                6,
+                true,
+                true,
+                "",
+                "_target distance _this < 3 && _target getVariable ['ARTEK_map_didntLoad',false]",
+                3
+            ];
+            
+            _object addAction [
+                "Lock Map View",
+                {
+                    params ["_target", "_caller", "_actionId", "_arguments"];
+                    _target setVariable ["ARTEK_map_locked",true,true];
+                },
+                nil,
+                5,
+                true,
+                true,
+                "",
+                "_target distance _this < 3 && !(_target getVariable ['ARTEK_map_didntLoad',false]) && !isNull (getAssignedCuratorLogic _this) && !(_target getVariable ['ARTEK_map_locked',false])",
+                3
+            ];
+            
+            _object addAction [
+                "Unlock Map View",
+                {
+                    params ["_target", "_caller", "_actionId", "_arguments"];
+                    _target setVariable ["ARTEK_map_locked",false,true];
+                },
+                nil,
+                4,
+                true,
+                true,
+                "",
+                "_target distance _this < 3 && !(_target getVariable ['ARTEK_map_didntLoad',false]) && !isNull (getAssignedCuratorLogic _this) && (_target getVariable ['ARTEK_map_locked',false])",
+                3
+            ];
+        };            
+               
+        ARTEK_fnc_getMapTextureIndex = {            
+            params ["_object"];            
+            private _out = ["UserTexture1m_F",0,[0,0,1,1],[0,-0.1,0]];            
+            {            
+                _x params ["_type","_index","_texturePos","_frontPos"];            
+                if((typeOf _object) isKindOf _type) exitWith {_out = _x;};            
+            }forEach [            
+                ["Land_Laptop_03_base_F",1,[0,0,1,1],[0,0,0.1]],            
+                ["Land_MapBoard_F",0,[0,0,1,1],[0,-0.4,0.5]],            
+                ["Land_Billboard_F",0,[0,0,1,1],[0,-0.7,1.25]],            
+                ["UserTexture1m_F",0,[0,0,1,1],[0,-0.1,0]],            
+                ["Land_WallSign_01_base_F",1,[0,-0.15,1,1],[0,-0.1,0.1]],            
+                ["Canvas_01_base_F",0,[0,0,1,1],[0,-0.1,0.1]],            
+                ["Land_BriefingRoomDesk_01_F",0,[0,0.25,1,1],[0,0,1.0]],            
+                ["Land_BriefingRoomScreen_01_F",0,[0,0,1,0.6],[0,0.3,1.8]],            
+                ["Land_Laptop_unfolded_F",0,[0,0,1,1],[0,-0.05,0.1]],            
+                ["Land_PCSet_01_screen_F",0,[0,0,1,1],[0,-0.1,0.1]],            
+                ["Land_TripodScreen_01_large_F",0,[0,0,1,1],[0,0.5,0.5]],        
+                ["Land_TripodScreen_01_large_black_F",0,[0,0,1,10],[0,0.5,0.5]]            
+            ];            
+            _out            
+        };            
+               
+        ARTEK_EP_fnc_addToExecQueue = {            
+            params ["_parameters","_function"];            
+            if(isNil "ARTEK_EP_ExecQueueStarted") then {            
+                ARTEK_EP_ExecQueueStarted = false;            
+            };            
+            if(isNil "ARTEK_EP_ExecQueue") then {            
+                ARTEK_EP_ExecQueue = [];            
+            };     
+            ARTEK_EP_ExecQueue pushBack [_parameters,_function];            
+            if(!ARTEK_EP_ExecQueueStarted) then {            
+                ARTEK_EP_ExecQueueStarted = true;            
+                [] spawn ARTEK_EP_fnc_startExecQueue;            
+            };            
+        };            
+               
+        ARTEK_EP_fnc_startExecQueue = {            
+            while {count ARTEK_EP_ExecQueue > 0} do {            
+                (ARTEK_EP_ExecQueue select 0) params ["_parameters","_function"];            
+                private _scriptHandle = _parameters spawn _function;            
+                waitUntil {scriptDone _scriptHandle};            
+                ARTEK_EP_ExecQueue deleteAt 0;            
+            };            
+            ARTEK_EP_ExecQueueStarted = false;            
+        };            
+    }) splitString "";            
+               
+    _value deleteAt (count _value - 1);            
+    _value deleteAt 0;            
+               
+    _value = _value joinString "";            
+    _value = _value + "removeMissionEventhandler ['EachFrame',_thisEventHandler];";            
+    _value = _value splitString "";            
+               
+    missionNamespace setVariable [_varName,_value,true];            
+               
+    [[_varName], {            
+        params ["_ding"];            
+        private _data = missionNamespace getVariable [_ding,[]];            
+        _data = _data joinString "";            
+        private _id = addMissionEventhandler ["EachFrame", _data];            
+    }] remoteExec ['spawn',0,_myJIPCode];            
+};            
+               
+this spawn {            
+    waitUntil {!isNil "ARTEK_fnc_addMapActions"};            
+    sleep 0.5;            
+    private _name = _this getVariable "ARTEK_map_name";            
+    if(!isNil "_name") exitWith {};            
+    [_this] spawn ARTEK_fnc_makeNewMapDisplay;            
 };
